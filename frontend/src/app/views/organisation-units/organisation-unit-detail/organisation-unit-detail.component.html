@@ -1,0 +1,91 @@
+<div class="detail-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <p-button label="Back to Organisation Units" icon="pi pi-arrow-left" severity="secondary" [text]="true"
+        styleClass="mb-3 -ml-2" (onClick)="goBack()" />
+
+    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-3" strokeWidth="4" />
+        <div class="text-500">Loading organisation unit…</div>
+    </div>
+
+    <div *ngIf="!loading && notFound" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-exclamation-circle text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">Organisation Unit Not Found</div>
+        <p-button label="Back to Organisation Units" icon="pi pi-arrow-left" styleClass="border-round-lg" (onClick)="goBack()" />
+    </div>
+
+    <ng-container *ngIf="!loading && !notFound && unit as u">
+
+        <!-- Header -->
+        <div class="header-card surface-card border-round-xl shadow-1 p-4 md:p-5 mb-4">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-4">
+                <div>
+                    <div class="text-500 text-sm uppercase font-semibold letter-spacing-1 mb-1">Organisation Unit</div>
+                    <div class="text-4xl font-bold text-900 mb-3">{{ u.name }}</div>
+                    <div class="flex gap-2 flex-wrap">
+                        <p-tag [value]="u.is_active ? 'Active' : 'Inactive'"
+                            [severity]="u.is_active ? 'success' : 'secondary'" styleClass="text-sm px-3 py-1" />
+                        <p-tag *ngFor="let c of u.service_categories" [value]="humanizeCategory(c)" severity="info"
+                            styleClass="text-sm px-3 py-1" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Jurisdiction -->
+            <div class="col-12 lg:col-5">
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-map text-primary"></i> Jurisdiction
+                    </div>
+
+                    <div *ngIf="coversAllDistricts" class="text-500 text-sm">
+                        Covers every district — no jurisdiction restriction configured.
+                    </div>
+
+                    <div *ngIf="!coversAllDistricts && jurisdictionDistricts.length === 0" class="text-500 text-sm">
+                        Jurisdiction references districts that no longer exist.
+                    </div>
+
+                    <div *ngIf="!coversAllDistricts" class="flex flex-column gap-2">
+                        <div *ngFor="let d of jurisdictionDistricts"
+                            class="flex justify-content-between align-items-center border-round-lg p-2 unit-card">
+                            <a class="text-900 font-medium no-underline hover:underline cursor-pointer"
+                                [routerLink]="['/district', d.id]">{{ d.name }}</a>
+                            <span class="text-500 text-sm">{{ d.province }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Queues -->
+            <div class="col-12 lg:col-7">
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-list text-primary"></i> Queues
+                        <p-tag [value]="queues.length.toString()" severity="secondary" styleClass="ml-1" />
+                    </div>
+
+                    <div *ngIf="!loadingQueues && queues.length === 0" class="text-500 text-sm">
+                        This unit has no queues configured yet.
+                    </div>
+
+                    <div class="flex flex-column gap-2">
+                        <div *ngFor="let q of queues"
+                            class="flex justify-content-between align-items-center border-round-lg p-3 unit-card">
+                            <span class="text-900 font-medium">{{ q.name }}</span>
+                            <span class="flex align-items-center gap-2">
+                                <span class="text-500 text-sm">Cap. {{ q.capacity ?? '—' }}</span>
+                                <p-tag [value]="q.is_active ? 'Active' : 'Inactive'"
+                                    [severity]="q.is_active ? 'success' : 'secondary'" />
+                                <p-button icon="pi pi-eye" severity="info" variant="outlined" pTooltip="View"
+                                    [routerLink]="['/queue', q.id]" />
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

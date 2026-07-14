@@ -1,0 +1,301 @@
+<div class="detail-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <!-- ── Back link ──────────────────────────────────────────── -->
+    <p-button label="Back to Cases" icon="pi pi-arrow-left" severity="secondary" [text]="true" styleClass="mb-3 -ml-2"
+        (onClick)="goBack()" />
+
+    <!-- ── Loading state ──────────────────────────────────────── -->
+    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-3" strokeWidth="4" />
+        <div class="text-500">Loading case…</div>
+    </div>
+
+    <!-- ── Not found state ────────────────────────────────────── -->
+    <div *ngIf="!loading && notFound" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-exclamation-circle text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">Case Not Found</div>
+        <div class="text-500 mb-4">This case doesn't exist, or you don't have permission to view it.</div>
+        <p-button label="Back to Cases" icon="pi pi-arrow-left" styleClass="border-round-lg" (onClick)="goBack()" />
+    </div>
+
+    <!-- ── Main content ───────────────────────────────────────── -->
+    <ng-container *ngIf="!loading && !notFound && caseItem as c">
+
+        <!-- ── Header card ──────────────────────────────────── -->
+        <div class="header-card surface-card border-round-xl shadow-1 p-4 md:p-5 mb-4">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-4">
+
+                <!-- Left: reference + badges -->
+                <div class="flex-1">
+                    <div class="text-500 text-sm uppercase font-semibold letter-spacing-1 mb-1">Case Reference</div>
+                    <div class="text-4xl font-bold text-900 mb-3">{{ c.reference_number }}</div>
+                    <div class="flex gap-2 flex-wrap align-items-center">
+                        <p-tag [value]="humanize(c.status)" [severity]="getStatusSeverity(c.status)"
+                            styleClass="text-sm px-3 py-1" />
+                        <p-tag [value]="c.urgency" [severity]="getUrgencySeverity(c.urgency)"
+                            styleClass="capitalize text-sm px-3 py-1" />
+                        <p-tag *ngIf="isSlaOverdue()" value="SLA Overdue" severity="danger" icon="pi pi-clock"
+                            styleClass="text-sm px-3 py-1" />
+                    </div>
+                </div>
+
+                <!-- Right: SLA + Officer Action buttons -->
+                <div class="flex flex-column align-items-end gap-3">
+
+                    <!-- SLA box -->
+                    <div *ngIf="c.sla_deadline" class="sla-box text-right border-round-lg p-3"
+                        [class.sla-overdue]="isSlaOverdue()">
+                        <div class="text-500 text-xs uppercase font-semibold mb-1">SLA Deadline</div>
+                        <div class="text-xl font-bold" [class.text-red-500]="isSlaOverdue()">
+                            {{ c.sla_deadline | date:'medium' }}
+                        </div>
+                        <div class="text-sm mt-1"
+                            [ngClass]="isSlaUrgent() ? 'text-red-500 font-semibold' : 'text-500'">
+                            {{ slaDaysText() }}
+                        </div>
+                    </div>
+
+                    <!-- Officer action buttons — only shown when the user has at least one action -->
+                    <div *ngIf="hasOfficerActions()" class="action-bar flex gap-2">
+                        <p-button *ngIf="canCorrectClassification()"
+                            icon="pi pi-pencil"
+                            label="Reclassify"
+                            severity="secondary"
+                            styleClass="action-btn border-round-lg"
+                            pTooltip="Correct Classification"
+                            tooltipPosition="bottom"
+                            (onClick)="openClassifyDialog()" />
+                        <p-button *ngIf="canRouteCase()"
+                            icon="pi pi-directions"
+                            label="Route"
+                            severity="secondary"
+                            styleClass="action-btn border-round-lg"
+                            pTooltip="Route Case"
+                            tooltipPosition="bottom"
+                            (onClick)="openRouteDialog()" />
+                        <p-button *ngIf="canUpdateStatus()"
+                            icon="pi pi-refresh"
+                            label="Update Status"
+                            styleClass="action-btn border-round-lg"
+                            pTooltip="Update Status"
+                            tooltipPosition="bottom"
+                            (onClick)="openStatusDialog()" />
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Body grid ─────────────────────────────────────── -->
+        <div class="grid">
+
+            <!-- ── Main column ────────────────────────────── -->
+            <div class="col-12 lg:col-8">
+
+                <!-- Overview info tiles -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="section-title mb-3">
+                        <i class="pi pi-info-circle text-primary"></i> Overview
+                    </div>
+                    <div class="grid">
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Category</div>
+                            <div class="text-900 font-medium">{{ humanize(c.category) }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Subcategory</div>
+                            <div class="text-900 font-medium">{{ c.subcategory ? humanize(c.subcategory) : '—' }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Confidence</div>
+                            <div class="text-900 font-medium">
+                                {{ c.classification_confidence != null ?
+                                    (c.classification_confidence * 100 | number:'1.0-0') + '%' : '—' }}
+                            </div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">District</div>
+                            <div class="text-900 font-medium">
+                                {{ c.district_id != null ? (districtName || 'Loading…') : '—' }}
+                            </div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Organisation Unit</div>
+                            <div class="text-900 font-medium">{{ organisationUnitName(c.queue_id) }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Opened</div>
+                            <div class="text-900 font-medium">
+                                {{ c.opened_at ? (c.opened_at | date:'medium') : '—' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="section-title mb-3">
+                        <i class="pi pi-align-left text-primary"></i> Description
+                    </div>
+                    
+                    <div class="flex flex-column gap-3">
+                        <div>
+                            <div class="text-500 text-xs font-semibold uppercase mb-1" *ngIf="c.english_description">Original Description</div>
+                            <div class="description-body text-900 line-height-3 surface-ground p-3 border-round-lg">
+                                {{ c.description }}
+                            </div>
+                        </div>
+
+                        <div *ngIf="c.english_description">
+                            <div class="text-xs font-semibold uppercase mb-1 text-primary flex align-items-center gap-1">
+                                <i class="pi pi-language"></i>
+                                <span>English Translation (AI Generated)</span>
+                            </div>
+                            <div class="description-body text-900 line-height-3 surface-ground p-3 border-round-lg border-1 border-primary-100">
+                                {{ c.english_description }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── Sidebar column ─────────────────────────── -->
+            <div class="col-12 lg:col-4">
+
+                <!-- Case Roadmap -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="section-title mb-3">
+                        <i class="pi pi-history text-primary"></i> Case Roadmap
+                    </div>
+
+                    <p-progressSpinner *ngIf="auditLoading" styleClass="w-2rem h-2rem" strokeWidth="4" />
+
+                    <div *ngIf="!auditLoading && auditEvents.length === 0" class="text-500 text-sm">
+                        No progress recorded for this case yet.
+                    </div>
+
+                    <p-timeline *ngIf="!auditLoading && auditEvents.length > 0" [value]="auditEvents"
+                        styleClass="roadmap-timeline">
+                        <ng-template #marker let-event>
+                            <span class="roadmap-dot"
+                                [class.roadmap-dot--auto]="isAutomatedActor(event)"></span>
+                        </ng-template>
+                        <ng-template #content let-event>
+                            <div class="roadmap-event">
+                                <div class="roadmap-action">{{ humanizeAction(event.action) }}</div>
+                                <div class="roadmap-change" *ngIf="describeEventChange(event)">
+                                    {{ describeEventChange(event) }}
+                                </div>
+                                <div class="roadmap-reason" *ngIf="describeEventReason(event)">
+                                    {{ describeEventReason(event) }}
+                                </div>
+                                <div class="roadmap-meta" *ngIf="describeActor(event)">
+                                    <i class="pi"
+                                        [ngClass]="isAutomatedActor(event) ? 'pi-sparkles' : 'pi-user'"></i>
+                                    <span>{{ describeActor(event) }}</span>
+                                </div>
+                                <div class="roadmap-time">{{ event.timestamp | date:'short' }}</div>
+                            </div>
+                        </ng-template>
+                    </p-timeline>
+                </div>
+
+            </div>
+        </div>
+
+    </ng-container>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  Officer Action Modals                                     -->
+<!-- ══════════════════════════════════════════════════════════ -->
+
+<!-- ── Reclassify ── -->
+<p-dialog header="Correct Classification" [(visible)]="showClassifyDialog"
+    [modal]="true" [style]="{ width: '30rem' }" [breakpoints]="{ '575px': '92vw' }"
+    styleClass="action-dialog" (onHide)="closeClassifyDialog()">
+
+    <div class="flex flex-column gap-4 pt-1">
+        <div>
+            <label class="dialog-field-label">Category *</label>
+            <p-select [options]="categoryOptions" [(ngModel)]="actionClassification.category"
+                optionLabel="label" optionValue="value" placeholder="Select category"
+                styleClass="w-full border-round-lg" appendTo="body" />
+        </div>
+        <div>
+            <label class="dialog-field-label">Urgency *</label>
+            <p-select [options]="urgencyOptions" [(ngModel)]="actionClassification.urgency"
+                optionLabel="label" optionValue="value" placeholder="Select urgency"
+                styleClass="w-full border-round-lg" appendTo="body" />
+        </div>
+        <div>
+            <label class="dialog-field-label">Subcategory</label>
+            <input pInputText [(ngModel)]="actionClassification.subcategory"
+                placeholder="Optional subcategory" class="w-full border-round-lg" />
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="closeClassifyDialog()" />
+        <p-button label="Apply Correction" icon="pi pi-check" styleClass="border-round-lg"
+            [loading]="actionLoading"
+            [disabled]="!actionClassification.category"
+            (onClick)="submitClassificationCorrection()" />
+    </ng-template>
+</p-dialog>
+
+<!-- ── Route Case ── -->
+<p-dialog header="Route Case" [(visible)]="showRouteDialog"
+    [modal]="true" [style]="{ width: '28rem' }" [breakpoints]="{ '575px': '92vw' }"
+    styleClass="action-dialog" (onHide)="closeRouteDialog()">
+
+    <div class="flex flex-column gap-3 pt-1">
+        <div>
+            <label class="dialog-field-label">Destination Queue</label>
+            <p class="text-500 text-xs mt-0 mb-2">Leave blank to use the AI-recommended queue.</p>
+            <p-select [options]="queueOptions" [(ngModel)]="actionRouteQueueId"
+                optionLabel="label" optionValue="value" placeholder="Auto-route (recommended)"
+                styleClass="w-full border-round-lg" appendTo="body" [showClear]="true"
+                [loading]="loadingQueues" />
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="closeRouteDialog()" />
+        <p-button label="Route Case" icon="pi pi-directions" styleClass="border-round-lg"
+            [loading]="actionLoading" (onClick)="submitRouteCase()" />
+    </ng-template>
+</p-dialog>
+
+<!-- ── Update Status ── -->
+<p-dialog header="Update Status" [(visible)]="showStatusDialog"
+    [modal]="true" [style]="{ width: '28rem' }" [breakpoints]="{ '575px': '92vw' }"
+    styleClass="action-dialog" (onHide)="closeStatusDialog()">
+
+    <div class="flex flex-column gap-4 pt-1">
+        <div>
+            <label class="dialog-field-label">New Status *</label>
+            <p class="text-500 text-xs mt-0 mb-2">
+                Greyed-out states aren't a valid move from "{{ humanize(caseItem?.status) }}".
+            </p>
+            <p-select [options]="statusOptions" [(ngModel)]="actionStatusUpdate.status"
+                optionLabel="label" optionValue="value" optionDisabled="disabled"
+                placeholder="Select status" styleClass="w-full border-round-lg" appendTo="body" />
+        </div>
+        <div>
+            <label class="dialog-field-label">Reason *</label>
+            <input pInputText [(ngModel)]="actionStatusUpdate.reason"
+                placeholder="Brief reason (min 3 chars)" class="w-full border-round-lg" />
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="closeStatusDialog()" />
+        <p-button label="Update Status" icon="pi pi-refresh" styleClass="border-round-lg"
+            [loading]="actionLoading"
+            [disabled]="!actionStatusUpdate.status || actionStatusUpdate.reason.length < 3"
+            (onClick)="submitStatusUpdate()" />
+    </ng-template>
+</p-dialog>

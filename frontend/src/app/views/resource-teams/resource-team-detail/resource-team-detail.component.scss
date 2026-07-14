@@ -1,0 +1,52 @@
+.letter-spacing-1 {
+    letter-spacing: 0.05em;
+}
+
+.capitalize {
+    text-transform: capitalize;
+}
+
+/* ── Header card ──────────────────────────────────────── */
+.header-card {
+    border: 1px solid var(--surface-border);
+}
+
+.capacity-pill {
+    background: var(--surface-ground);
+    border: 1px solid var(--surface-border);
+}
+
+/* ── Info labels ──────────────────────────────────────── */
+.info-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-color-secondary);
+    margin-bottom: 0.25rem;
+}
+
+/* ── Skill chips ──────────────────────────────────────── */
+:host ::ng-deep .skill-chip {
+    .p-chip {
+        background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+        color: var(--primary-color);
+        border: 1px solid color-mix(in srgb, var(--primary-color) 25%, transparent);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+}
+
+/* ── Category tags ────────────────────────────────────── */
+:host ::ng-deep .category-tag {
+    font-size: 0.78rem;
+}
+
+/* ── Stat rows ────────────────────────────────────────── */
+.stat-row {
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: var(--surface-hover) !important;
+    }
+}

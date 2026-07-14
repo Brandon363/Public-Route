@@ -1,0 +1,120 @@
+<div class="detail-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <p-button label="Back to Districts" icon="pi pi-arrow-left" severity="secondary" [text]="true"
+        styleClass="mb-3 -ml-2" (onClick)="goBack()" />
+
+    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-3" strokeWidth="4" />
+        <div class="text-500">Loading district…</div>
+    </div>
+
+    <div *ngIf="!loading && notFound" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-exclamation-circle text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">District Not Found</div>
+        <p-button label="Back to Districts" icon="pi pi-arrow-left" styleClass="border-round-lg" (onClick)="goBack()" />
+    </div>
+
+    <ng-container *ngIf="!loading && !notFound && district as d">
+
+        <!-- Header -->
+        <div class="header-card surface-card border-round-xl shadow-1 p-4 md:p-5 mb-4">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-4">
+                <div>
+                    <div class="text-500 text-sm uppercase font-semibold letter-spacing-1 mb-1">District</div>
+                    <div class="text-4xl font-bold text-900 mb-3">{{ d.name }}</div>
+                    <div class="flex gap-2 flex-wrap">
+                        <p-tag [value]="d.province" severity="info" styleClass="text-sm px-3 py-1" />
+                        <p-tag [value]="humanizeSettlement(d.settlement_type)" severity="secondary"
+                            styleClass="text-sm px-3 py-1" />
+                    </div>
+                </div>
+                <div *ngIf="d.latitude != null && d.longitude != null" class="text-right border-round-lg p-3 surface-ground">
+                    <div class="text-500 text-xs uppercase font-semibold mb-1">Coordinates</div>
+                    <div class="text-900 font-medium">{{ d.latitude }}, {{ d.longitude }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Organisation Units -->
+            <div class="col-12 lg:col-7">
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-building text-primary"></i> Organisation Units Serving This District
+                        <p-tag [value]="units.length.toString()" severity="secondary" styleClass="ml-1" />
+                    </div>
+
+                    <div *ngIf="units.length === 0" class="text-500 text-sm">
+                        No organisation unit currently covers this district.
+                    </div>
+
+                    <div class="flex flex-column gap-3">
+                        <div *ngFor="let unit of units" class="unit-card border-round-lg p-3">
+                            <div class="flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+                                <a class="font-semibold text-900 no-underline hover:underline cursor-pointer"
+                                    [routerLink]="['/organisation-unit', unit.id]">{{ unit.name }}</a>
+                                <p-tag [value]="unit.is_active ? 'Active' : 'Inactive'"
+                                    [severity]="unit.is_active ? 'success' : 'secondary'" />
+                            </div>
+                            <div class="flex gap-1 flex-wrap mb-2">
+                                <p-tag *ngFor="let c of unit.service_categories" [value]="humanizeCategory(c)" severity="info" />
+                                <span *ngIf="!unit.service_categories?.length" class="text-500 text-sm">No categories configured</span>
+                            </div>
+                            <div class="text-xs text-500 mb-1" *ngIf="!unit.jurisdiction?.length">
+                                Covers every district (no jurisdiction restriction)
+                            </div>
+
+                            <div *ngIf="queuesByUnit[unit.id]?.length" class="mt-2 pt-2 border-top-1 surface-border">
+                                <div class="text-xs text-500 uppercase font-semibold mb-2">Queues</div>
+                                <div class="flex flex-column gap-1">
+                                    <div *ngFor="let q of queuesByUnit[unit.id]" class="flex justify-content-between align-items-center text-sm">
+                                        <a class="text-900 no-underline hover:underline cursor-pointer"
+                                            [routerLink]="['/queue', q.id]">{{ q.name }}</a>
+                                        <span class="flex align-items-center gap-2">
+                                            <span class="text-500 text-xs">Cap. {{ q.capacity ?? '—' }}</span>
+                                            <p-tag [value]="q.is_active ? 'Active' : 'Inactive'"
+                                                [severity]="q.is_active ? 'success' : 'secondary'" styleClass="text-xs" />
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Teams -->
+            <div class="col-12 lg:col-5">
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-users text-primary"></i> Resource Teams Based Here
+                        <p-tag [value]="teams.length.toString()" severity="secondary" styleClass="ml-1" />
+                    </div>
+
+                    <div *ngIf="!loadingRelated && teams.length === 0" class="text-500 text-sm">
+                        No resource team is based in this district.
+                    </div>
+
+                    <div class="flex flex-column gap-3">
+                        <div *ngFor="let team of teams" class="unit-card border-round-lg p-3">
+                            <div class="flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
+                                <div class="font-semibold text-900">{{ team.name }}</div>
+                                <p-tag [value]="team.is_active ? 'Active' : 'Inactive'"
+                                    [severity]="team.is_active ? 'success' : 'secondary'" />
+                            </div>
+                            <div class="text-sm text-700 mb-1" *ngIf="team.skills?.length">
+                                {{ team.skills!.join(', ') }}
+                            </div>
+                            <div class="flex justify-content-between align-items-center text-sm">
+                                <div class="flex gap-1 flex-wrap">
+                                    <p-tag *ngFor="let c of team.service_categories" [value]="humanizeCategory(c)" severity="info" />
+                                </div>
+                                <span class="text-500 text-xs">Capacity {{ team.capacity }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

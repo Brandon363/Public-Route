@@ -1,0 +1,252 @@
+<div class="report-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <!-- ── Permission denied ──────────────────────────────────── -->
+    <div *ngIf="!canSubmit" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-lock text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">Access Restricted</div>
+        <div class="text-500 mb-4">Your role ({{ userRole }}) does not have permission to submit cases.</div>
+        <p-button label="Back to Cases" icon="pi pi-arrow-left" (onClick)="goToCases()" />
+    </div>
+
+    <!-- ── Main content ───────────────────────────────────────── -->
+    <ng-container *ngIf="canSubmit">
+
+        <!-- Page header -->
+        <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-3">
+            <div>
+                <div class="text-4xl font-bold text-900">Report a Case</div>
+                <div class="text-500 mt-1">Submit a new citizen service request — it will be classified and routed automatically.</div>
+            </div>
+            <p-button label="View All Cases" icon="pi pi-list" severity="secondary" [outlined]="true"
+                styleClass="border-round-lg" (onClick)="goToCases()" />
+        </div>
+
+        <!-- ── Success state ──────────────────────────────────── -->
+        <div *ngIf="submitted && createdCase" class="success-card surface-card border-round-xl shadow-2 p-5 mb-4">
+            <div class="flex flex-column align-items-center text-center gap-3">
+                <div class="success-icon-wrap flex align-items-center justify-content-center border-round-full">
+                    <i class="pi pi-check-circle text-4xl text-green-500"></i>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-900 mb-1">Case Submitted Successfully</div>
+                    <div class="text-500">Your report has been received, classified, and queued for review.</div>
+                </div>
+
+                <div class="grid w-full mt-2">
+                    <div class="col-12 md:col-4">
+                        <div class="result-stat border-round-lg p-3">
+                            <div class="text-xs text-500 uppercase font-semibold mb-1">Reference</div>
+                            <div class="text-xl font-bold text-primary">{{ createdCase.reference_number }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <div class="result-stat border-round-lg p-3">
+                            <div class="text-xs text-500 uppercase font-semibold mb-1">Status</div>
+                            <div class="text-xl font-bold">
+                                <p-tag [value]="createdCase.status" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <div class="result-stat border-round-lg p-3">
+                            <div class="text-xs text-500 uppercase font-semibold mb-1">Category</div>
+                            <div class="text-xl font-bold text-900">{{ createdCase.category | titlecase }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 flex-wrap justify-content-center mt-2">
+                    <p-button label="Report Another Case" icon="pi pi-plus" severity="secondary" [outlined]="true"
+                        styleClass="border-round-lg" (onClick)="resetForm()" />
+                    <p-button label="View in Cases Dashboard" icon="pi pi-arrow-right" iconPos="right"
+                        styleClass="border-round-lg" (onClick)="goToCases()" />
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Form ───────────────────────────────────────────── -->
+        <div *ngIf="!submitted" class="grid">
+            <div class="col-12 lg:col-8 xl:col-7">
+                <div class="surface-card border-round-xl shadow-1 p-4">
+
+                    <!-- Error banner -->
+                    <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="w-full mb-3" />
+
+                    <!-- Description -->
+                    <div class="field mb-4">
+                        <label class="form-label" for="description">
+                            Description <span class="text-red-500">*</span>
+                        </label>
+                        <p class="text-500 text-sm mt-0 mb-2">
+                            Describe the issue in detail — the more specific, the better the AI classification.
+                        </p>
+                        <textarea pTextarea id="description" [(ngModel)]="description"
+                            [maxlength]="MAX_DESC" rows="6"
+                            placeholder="e.g. There is a burst water pipe on Samora Machel Ave near the Shell garage. Water has been running since yesterday morning and the road is flooded."
+                            class="w-full border-round-lg resize-none" style="resize:vertical">
+                        </textarea>
+                        <div class="flex justify-content-end mt-1">
+                            <span class="text-xs text-500"
+                                [class.text-red-400]="descriptionLength > MAX_DESC * 0.9">
+                                {{ descriptionLength }} / {{ MAX_DESC }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="field mb-4">
+                        <label class="form-label" for="location">Location</label>
+                        <p class="text-500 text-sm mt-0 mb-2">Street address, landmark, or GPS coordinates.</p>
+                        <input pInputText id="location" [(ngModel)]="locationText"
+                            placeholder="e.g. Corner 4th Street & Nelson Mandela Ave, Harare CBD"
+                            class="w-full border-round-lg" />
+                    </div>
+
+                    <!-- District -->
+                    <div class="field mb-4">
+                        <label class="form-label">District</label>
+                        <p class="text-500 text-sm mt-0 mb-2">Select the district where the issue is located.</p>
+                        <p-select [options]="districtOptions" [(ngModel)]="selectedDistrictId"
+                            optionLabel="label" optionValue="value"
+                            placeholder="Select a district (optional)"
+                            [loading]="loadingDistricts" [showClear]="true"
+                            styleClass="w-full border-round-lg" appendTo="body" [filter]="true" />
+                    </div>
+
+                    <!-- ── Contact details ───────────────────────────────── -->
+                    <div class="contact-section border-round-xl p-3 mb-4">
+                        <div class="flex align-items-start gap-2 mb-3">
+                            <i class="pi pi-bell text-primary mt-1"></i>
+                            <div>
+                                <div class="font-semibold text-900 text-sm">Get case updates (optional)</div>
+                                <div class="text-500 text-xs mt-1">Provide your email or phone to receive status notifications.</div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="field mb-3">
+                            <label class="form-label" for="contact-email">Email Address</label>
+                            <input pInputText id="contact-email" [(ngModel)]="contactEmail" type="email"
+                                placeholder="you@example.com" class="w-full border-round-lg"
+                                [class.p-invalid]="contactEmail && !isEmailValid" />
+                            <small *ngIf="contactEmail && !isEmailValid" class="text-red-400 text-xs mt-1 block">
+                                Please enter a valid email address.
+                            </small>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="field mb-0">
+                            <label class="form-label">Phone Number</label>
+                            <div class="flex gap-2">
+                                <p-select [options]="countryOptions" [(ngModel)]="selectedCountry"
+                                    optionLabel="label"
+                                    styleClass="country-select border-round-lg"
+                                    appendTo="body" [filter]="true" filterBy="label">
+                                    <ng-template #selectedItem let-c>
+                                        <span class="flex align-items-center gap-1 text-sm">
+                                            <span>{{ c?.flag }}</span>
+                                            <span class="font-semibold">{{ c?.dialCode }}</span>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template #item let-c>
+                                        <span class="flex align-items-center gap-2 text-sm w-full">
+                                            <span>{{ c.flag }}</span>
+                                            <span>{{ c.label }}</span>
+                                            <span class="text-500 text-xs ml-auto">{{ c.dialCode }}</span>
+                                        </span>
+                                    </ng-template>
+                                </p-select>
+                                <input pInputText [(ngModel)]="contactPhone" type="tel"
+                                    placeholder="0771 234 567" class="flex-1 border-round-lg" />
+                            </div>
+                            <div *ngIf="phonePreviewed" class="flex align-items-center gap-1 mt-1">
+                                <i class="pi pi-check-circle text-green-500 text-xs"></i>
+                                <span class="text-xs text-500">Stored as <strong class="text-900">{{ phonePreviewed }}</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent -->
+                    <div class="field mb-5">
+                        <label class="form-label">Data Consent</label>
+                        <p class="text-500 text-sm mt-0 mb-2">How may we use the information you provide?</p>
+                        <div class="flex flex-column gap-2">
+                            <div *ngFor="let opt of consentOptions"
+                                class="consent-option flex align-items-start gap-3 p-3 border-round-lg cursor-pointer"
+                                [class.selected]="consentStatus === opt.value"
+                                (click)="consentStatus = $any(opt.value)">
+                                <div class="consent-radio mt-1 flex-shrink-0"
+                                    [class.active]="consentStatus === opt.value"></div>
+                                <span class="text-sm text-900">{{ opt.label }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex justify-content-end gap-2">
+                        <p-button label="Clear Form" icon="pi pi-times" severity="secondary" [outlined]="true"
+                            styleClass="border-round-lg" (onClick)="resetForm()" [disabled]="submitting" />
+                        <p-button label="Submit Report" icon="pi pi-send" iconPos="right"
+                            styleClass="border-round-lg" (onClick)="submit()"
+                            [loading]="submitting" [disabled]="!isFormValid || submitting" />
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Sidebar tips -->
+            <div class="col-12 lg:col-4 xl:col-5">
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-3">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-info-circle text-primary"></i>
+                        <span class="font-semibold text-900">What happens next?</span>
+                    </div>
+                    <div class="flex flex-column gap-3">
+                        <div class="timeline-step flex gap-3">
+                            <div class="step-badge flex align-items-center justify-content-center border-round-full text-xs font-bold flex-shrink-0">1</div>
+                            <div>
+                                <div class="font-semibold text-900 text-sm">AI Classification</div>
+                                <div class="text-500 text-xs mt-1">The AI reads your description and assigns a category, subcategory, and urgency level.</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step flex gap-3">
+                            <div class="step-badge flex align-items-center justify-content-center border-round-full text-xs font-bold flex-shrink-0">2</div>
+                            <div>
+                                <div class="font-semibold text-900 text-sm">Automatic Routing</div>
+                                <div class="text-500 text-xs mt-1">The case is routed to the most appropriate queue for your area.</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step flex gap-3">
+                            <div class="step-badge flex align-items-center justify-content-center border-round-full text-xs font-bold flex-shrink-0">3</div>
+                            <div>
+                                <div class="font-semibold text-900 text-sm">Officer Review</div>
+                                <div class="text-500 text-xs mt-1">A dispatcher or intake officer reviews and can correct the classification if needed.</div>
+                            </div>
+                        </div>
+                        <div class="timeline-step flex gap-3">
+                            <div class="step-badge flex align-items-center justify-content-center border-round-full text-xs font-bold flex-shrink-0">4</div>
+                            <div>
+                                <div class="font-semibold text-900 text-sm">Field Assignment</div>
+                                <div class="text-500 text-xs mt-1">A field team is assigned and the case moves to In Progress.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="surface-card border-round-xl shadow-1 p-4">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <i class="pi pi-lightbulb text-yellow-500"></i>
+                        <span class="font-semibold text-900">Tips for a good report</span>
+                    </div>
+                    <ul class="m-0 pl-3 text-500 text-sm flex flex-column gap-2">
+                        <li>Be specific — include street names, landmarks, or GPS.</li>
+                        <li>Describe the impact (e.g. "road is impassable" vs "pothole").</li>
+                        <li>If safe to do so, note when the issue started.</li>
+                        <li>One issue per report gives the best classification accuracy.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+    </ng-container>
+</div>

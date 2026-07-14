@@ -1,0 +1,222 @@
+<div class="detail-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <!-- ── Back link ──────────────────────────────────────────── -->
+    <p-button label="Back to Resource Teams" icon="pi pi-arrow-left" severity="secondary" [text]="true"
+        styleClass="mb-3 -ml-2" (onClick)="goBack()" />
+
+    <!-- ── Loading state ──────────────────────────────────────── -->
+    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-3" strokeWidth="4" />
+        <div class="text-500">Loading resource team…</div>
+    </div>
+
+    <!-- ── Not found state ────────────────────────────────────── -->
+    <div *ngIf="!loading && notFound" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-exclamation-circle text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">Team Not Found</div>
+        <div class="text-500 mb-4">This resource team doesn't exist or couldn't be loaded.</div>
+        <p-button label="Back to Resource Teams" icon="pi pi-arrow-left" styleClass="border-round-lg"
+            (onClick)="goBack()" />
+    </div>
+
+    <!-- ── Main content ───────────────────────────────────────── -->
+    <ng-container *ngIf="!loading && !notFound && team as t">
+
+        <!-- Header card -->
+        <div class="header-card surface-card border-round-xl shadow-1 p-4 md:p-5 mb-4">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-4">
+                <div>
+                    <div class="text-500 text-sm uppercase font-semibold letter-spacing-1 mb-1">Resource Team</div>
+                    <div class="text-4xl font-bold text-900 mb-3">{{ t.name }}</div>
+                    <div class="flex gap-2 flex-wrap align-items-center">
+                        <p-tag [value]="t.is_active ? 'Active' : 'Inactive'"
+                            [severity]="t.is_active ? 'success' : 'secondary'" styleClass="text-sm px-3 py-1" />
+                        <span class="text-500 text-sm">
+                            <i class="pi pi-users mr-1"></i>Capacity {{ t.capacity }}
+                        </span>
+                        <ng-container *ngIf="baseDistrict">
+                            <span class="text-500">·</span>
+                            <a class="text-primary font-medium cursor-pointer no-underline hover:underline"
+                                [routerLink]="['/district', baseDistrict.id]">
+                                <i class="pi pi-map-marker text-xs mr-1"></i>{{ baseDistrict.name }},
+                                {{ baseDistrict.province }}
+                            </a>
+                        </ng-container>
+                        <ng-container *ngIf="!baseDistrict && t.base_district_id == null">
+                            <span class="text-500">· No base district assigned</span>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <!-- Capacity summary pill -->
+                <div class="capacity-pill border-round-lg p-3 text-center" style="min-width: 9rem;">
+                    <div class="text-500 text-xs uppercase font-semibold mb-1">Capacity</div>
+                    <div class="text-4xl font-bold text-900">{{ t.capacity }}</div>
+                    <div class="text-500 text-xs mt-1">members</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- ── Main column ──────────────────────────────────────── -->
+            <div class="col-12 lg:col-8">
+
+                <!-- Overview info tiles -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-info-circle text-primary"></i> Overview
+                    </div>
+                    <div class="grid">
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Status</div>
+                            <div class="mt-1">
+                                <p-tag [value]="t.is_active ? 'Active' : 'Inactive'"
+                                    [severity]="t.is_active ? 'success' : 'secondary'" />
+                            </div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Capacity</div>
+                            <div class="text-900 font-medium text-xl">{{ t.capacity }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Team ID</div>
+                            <div class="text-900 font-medium">#{{ t.id }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Base District</div>
+                            <div class="text-900 font-medium">
+                                <span *ngIf="baseDistrict">
+                                    <a class="text-primary no-underline hover:underline cursor-pointer"
+                                        [routerLink]="['/district', baseDistrict.id]">
+                                        {{ baseDistrict.name }}
+                                    </a>
+                                </span>
+                                <span *ngIf="!baseDistrict && t.base_district_id != null" class="text-500">Loading…</span>
+                                <span *ngIf="t.base_district_id == null" class="text-500">—</span>
+                            </div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Province</div>
+                            <div class="text-900 font-medium">{{ baseDistrict?.province || '—' }}</div>
+                        </div>
+                        <div class="col-6 md:col-4 mb-3">
+                            <div class="info-label">Settlement Type</div>
+                            <div class="text-900 font-medium capitalize">
+                                {{ baseDistrict?.settlement_type ? humanizeCategory(baseDistrict!.settlement_type) : '—' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-wrench text-primary"></i> Skills
+                        <p-tag *ngIf="t.skills?.length" [value]="t.skills!.length.toString()"
+                            severity="secondary" styleClass="ml-1" />
+                    </div>
+                    <div *ngIf="t.skills && t.skills.length > 0" class="flex flex-wrap gap-2">
+                        <p-chip *ngFor="let skill of t.skills" [label]="skill" styleClass="skill-chip" />
+                    </div>
+                    <div *ngIf="!t.skills || t.skills.length === 0" class="text-500 text-sm">
+                        No skills listed for this team.
+                    </div>
+                </div>
+
+                <!-- Service Categories -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-tag text-primary"></i> Service Categories
+                    </div>
+                    <div *ngIf="t.service_categories && t.service_categories.length > 0" class="flex flex-wrap gap-2">
+                        <p-tag *ngFor="let cat of t.service_categories"
+                            [value]="humanizeCategory(cat)" severity="info"
+                            styleClass="text-sm px-3 py-1 category-tag" />
+                    </div>
+                    <div *ngIf="!t.service_categories || t.service_categories.length === 0"
+                        class="text-500 text-sm">
+                        No service categories assigned to this team.
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── Sidebar column ───────────────────────────────────── -->
+            <div class="col-12 lg:col-4">
+
+                <!-- Quick stats card -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-chart-bar text-primary"></i> Quick Stats
+                    </div>
+                    <div class="flex flex-column gap-3">
+                        <div class="stat-row flex justify-content-between align-items-center p-3 surface-ground border-round-lg">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-wrench text-500 text-sm"></i>
+                                <span class="text-sm text-700">Total Skills</span>
+                            </div>
+                            <span class="font-bold text-900">{{ t.skills?.length || 0 }}</span>
+                        </div>
+                        <div class="stat-row flex justify-content-between align-items-center p-3 surface-ground border-round-lg">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-tag text-500 text-sm"></i>
+                                <span class="text-sm text-700">Service Categories</span>
+                            </div>
+                            <span class="font-bold text-900">{{ t.service_categories?.length || 0 }}</span>
+                        </div>
+                        <div class="stat-row flex justify-content-between align-items-center p-3 surface-ground border-round-lg">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-users text-500 text-sm"></i>
+                                <span class="text-sm text-700">Capacity</span>
+                            </div>
+                            <span class="font-bold text-900">{{ t.capacity }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Base District card -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4" *ngIf="baseDistrict">
+                    <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                        <i class="pi pi-map text-primary"></i> Base District
+                    </div>
+                    <div class="flex flex-column gap-2">
+                        <div>
+                            <div class="info-label">Name</div>
+                            <div class="text-900 font-semibold text-lg">{{ baseDistrict.name }}</div>
+                        </div>
+                        <div>
+                            <div class="info-label">Province</div>
+                            <div class="text-900 font-medium">{{ baseDistrict.province }}</div>
+                        </div>
+                        <div *ngIf="baseDistrict.settlement_type">
+                            <div class="info-label">Settlement Type</div>
+                            <div class="text-900 font-medium capitalize">{{ baseDistrict.settlement_type }}</div>
+                        </div>
+                        <div *ngIf="baseDistrict.latitude != null && baseDistrict.longitude != null">
+                            <div class="info-label">Coordinates</div>
+                            <div class="text-700 text-sm font-mono">
+                                {{ baseDistrict.latitude | number:'1.4-4' }},
+                                {{ baseDistrict.longitude | number:'1.4-4' }}
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <p-button label="View District" icon="pi pi-arrow-right" severity="info"
+                                variant="outlined" styleClass="w-full border-round-lg"
+                                [routerLink]="['/district', baseDistrict.id]" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- No district placeholder -->
+                <div class="surface-card border-round-xl shadow-1 p-4 mb-4 text-center"
+                    *ngIf="!baseDistrict && t.base_district_id == null">
+                    <i class="pi pi-map text-3xl text-300 mb-2 block"></i>
+                    <div class="text-500 text-sm">No base district assigned to this team.</div>
+                </div>
+
+            </div>
+        </div>
+
+    </ng-container>
+
+</div>

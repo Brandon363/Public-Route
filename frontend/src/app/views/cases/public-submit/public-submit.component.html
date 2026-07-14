@@ -1,0 +1,283 @@
+<!-- ══════════════════════════════════════════════════════════
+     Public Case Submission — 3-step wizard with Voice Intake
+     ══════════════════════════════════════════════════════════ -->
+<div class="public-page">
+
+    <!-- ── Hero ──────────────────────────────────────────────── -->
+    <div class="hero">
+        <div class="hero-inner">
+            <!-- <div class="hero-badge">
+                <i class="pi pi-shield"></i>
+                <span>Public Service Portal</span>
+            </div> -->
+            <h1 class="hero-title">Report a Service Issue</h1>
+            <p class="hero-subtitle">No account needed — AI routes your report automatically.</p>
+            <a class="hero-login-link" (click)="goToLogin()">
+                <i class="pi pi-sign-in"></i> Staff login
+            </a>
+        </div>
+    </div>
+
+    <!-- ── Body ─────────────────────────────────────────────── -->
+    <div class="page-body">
+
+        <!-- ── Success screen ─────────────────────────────── -->
+        <div *ngIf="submitted && createdCase" class="success-card animate-in">
+            <div class="success-inner">
+                <div class="success-icon-wrap">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="success-text">
+                    <h2>Report Received!</h2>
+                    <p>Your case is being classified and routed automatically.</p>
+                </div>
+            </div>
+
+            <div class="ref-grid">
+                <div class="ref-tile ref-tile--highlight">
+                    <div class="ref-label">Reference</div>
+                    <div class="ref-value ref-value--big">{{ createdCase.reference_number }}</div>
+                    <div class="ref-sub">Save this to track your case</div>
+                </div>
+                <div class="ref-tile">
+                    <div class="ref-label">Status</div>
+                    <div class="ref-value"><p-tag [value]="createdCase.status" /></div>
+                </div>
+                <div class="ref-tile">
+                    <div class="ref-label">Category</div>
+                    <div class="ref-value">{{ createdCase.category | titlecase }}</div>
+                </div>
+            </div>
+
+            <div *ngIf="contactEmail || contactPhone" class="contact-confirm">
+                <i class="pi pi-bell text-primary"></i>
+                <div>
+                    <div class="text-sm font-semibold">Updates will be sent to:</div>
+                    <div *ngIf="contactEmail" class="text-sm text-500">
+                        <i class="pi pi-envelope mr-1"></i>{{ contactEmail }}
+                    </div>
+                    <div *ngIf="contactPhone" class="text-sm text-500">
+                        <i class="pi pi-phone mr-1"></i>{{ phonePreviewed }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="success-actions">
+                <p-button label="Submit Another Report" icon="pi pi-plus" severity="secondary" [outlined]="true"
+                    styleClass="border-round-lg" (onClick)="resetForm()" />
+            </div>
+        </div>
+
+        <!-- ── Wizard form ─────────────────────────────────── -->
+        <div *ngIf="!submitted" class="wizard-card animate-in">
+
+            <!-- Error banner -->
+            <p-message *ngIf="errorMessage" severity="error" [text]="errorMessage" styleClass="w-full mb-4" />
+
+            <!-- Mode Selector: Voice Assistant vs Manual Form -->
+            <div class="flex justify-content-center mb-4 pb-3 border-bottom-1 border-200">
+                <p-selectbutton [options]="modeOptions" [(ngModel)]="voiceActive" optionLabel="label"
+                    optionValue="value" (onChange)="onModeChange()" />
+            </div>
+
+            <!-- ── Voice Assistant Panel ─────────────────── -->
+            <div *ngIf="voiceActive" class="voice-panel animate-in">
+                <div class="voice-assistant-header">
+                    <i class="pi pi-sparkles"></i>
+                    <span>AI Voice Assistant</span>
+                </div>
+
+                <div class="voice-chat-bubble">
+                    <div class="bubble-icon">
+                        <i class="pi pi-android text-primary"></i>
+                    </div>
+                    <div class="bubble-content">
+                        <p class="m-0 leading-normal">{{ voiceResponseText || 'Hi! Please tap the microphone below and
+                            tell me what the issue is and where it is located. For example: "There is a burst water pipe
+                            on Samora Machel Ave outside the post office."' }}</p>
+                    </div>
+                </div>
+
+                <div class="mic-controls">
+                    <p-button *ngIf="!isRecording" icon="pi pi-microphone" severity="primary" size="large"
+                        [rounded]="true" [loading]="voiceLoading" (onClick)="startRecording()" />
+                    <p-button *ngIf="isRecording" icon="pi pi-stop" severity="danger" size="large" [rounded]="true"
+                        styleClass="pulsing" (onClick)="stopRecording()" />
+
+                    <div class="mic-status">
+                        <span *ngIf="isRecording" class="text-red-500 font-semibold">Recording ({{
+                            formatDuration(recordingDuration) }})... Tap to finish</span>
+                        <span *ngIf="voiceLoading"><i class="pi pi-spin pi-spinner mr-1"></i> AI is transcribing and
+                            translating...</span>
+                        <span *ngIf="!isRecording && !voiceLoading">Tap microphone and speak</span>
+                    </div>
+                </div>
+
+                <!-- Live Extracted Fields Preview -->
+                <div class="extracted-preview animate-in" *ngIf="description || locationText">
+                    <div class="preview-title">
+                        <i class="pi pi-check-square"></i> Extracted Details
+                    </div>
+                    <div class="preview-field" *ngIf="description">
+                        <span class="preview-label">Issue:</span>
+                        <span class="preview-value">{{ description }}</span>
+                    </div>
+                    <div class="preview-field" *ngIf="locationText">
+                        <span class="preview-label">Location:</span>
+                        <span class="preview-value">{{ locationText }}</span>
+                    </div>
+                </div>
+
+                <div class="voice-actions mt-4 pt-2 border-top-1 border-200">
+                    <p-button label="Continue to Updates (Optional)" icon="pi pi-arrow-right" iconPos="right"
+                        styleClass="w-full next-btn border-round-lg" (onClick)="currentStep = 3; voiceActive = false;"
+                        [disabled]="!isStep1Valid" />
+                </div>
+            </div>
+
+            <!-- ── Manual Wizard Panels ──────────────────── -->
+            <div *ngIf="!voiceActive">
+                <!-- Step progress dots -->
+                <div class="step-dots">
+                    <div class="dot" [class.active]="currentStep === 1" [class.done]="currentStep > 1">
+                        <span *ngIf="currentStep <= 1">1</span>
+                        <i *ngIf="currentStep > 1" class="pi pi-check"></i>
+                    </div>
+                    <div class="dot-line" [class.done]="currentStep > 1"></div>
+                    <div class="dot" [class.active]="currentStep === 2" [class.done]="currentStep > 2">
+                        <span *ngIf="currentStep <= 2">2</span>
+                        <i *ngIf="currentStep > 2" class="pi pi-check"></i>
+                    </div>
+                    <div class="dot-line" [class.done]="currentStep > 2"></div>
+                    <div class="dot" [class.active]="currentStep === 3">
+                        <span>3</span>
+                    </div>
+                </div>
+
+                <!-- ── Step 1 — What happened? ───────────────── -->
+                <div *ngIf="currentStep === 1" class="step-panel">
+                    <div class="step-header">
+                        <div class="step-label">Step 1 of 3</div>
+                        <h2 class="step-title">What's the issue?</h2>
+                    </div>
+
+                    <div class="field">
+                        <textarea pTextarea id="desc" [(ngModel)]="description" [maxlength]="MAX_DESC" rows="7"
+                            placeholder="Describe the problem — include street names or landmarks, e.g. 'Burst pipe on Samora Machel Ave near Shell garage, flooding since yesterday.'"
+                            class="w-full border-round-lg desc-area">
+                        </textarea>
+                        <div class="char-counter">
+                            <span [class.warn]="descriptionLength > MAX_DESC * 0.9">
+                                {{ descriptionLength }} / {{ MAX_DESC }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="step-actions">
+                        <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+                            styleClass="next-btn border-round-lg w-full" (onClick)="nextStep()"
+                            [disabled]="!isStep1Valid" />
+                    </div>
+                </div>
+
+                <!-- ── Step 2 — Where is it? ─────────────────── -->
+                <div *ngIf="currentStep === 2" class="step-panel">
+                    <div class="step-header">
+                        <div class="step-label">Step 2 of 3</div>
+                        <h2 class="step-title">Where is it?</h2>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="location">Address or landmark</label>
+                        <input pInputText id="location" [(ngModel)]="locationText"
+                            placeholder="e.g. Corner 4th Street & Nelson Mandela Ave, Harare CBD"
+                            class="w-full border-round-lg" />
+                    </div>
+
+                    <div class="field" *ngIf="districtOptions.length > 0">
+                        <label class="field-label">District</label>
+                        <p-select [options]="districtOptions" [(ngModel)]="selectedDistrictId" optionLabel="label"
+                            optionValue="value" placeholder="Select district (optional)" [loading]="loadingDistricts"
+                            [showClear]="true" styleClass="w-full border-round-lg" appendTo="body" [filter]="true" />
+                    </div>
+
+                    <div class="step-actions step-actions--split">
+                        <p-button label="Back" icon="pi pi-arrow-left" [text]="true" severity="secondary"
+                            (onClick)="prevStep()" />
+                        <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+                            styleClass="next-btn border-round-lg" (onClick)="nextStep()" />
+                    </div>
+                </div>
+
+                <!-- ── Step 3 — Stay updated ─────────────────── -->
+                <div *ngIf="currentStep === 3" class="step-panel">
+                    <div class="step-header">
+                        <div class="step-label">Step 3 of 3 · Optional</div>
+                        <h2 class="step-title">Get updates on your case</h2>
+                        <p class="step-subtitle">Leave your email or phone and we'll notify you of progress. Skip if you
+                            prefer to stay anonymous.</p>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="field">
+                        <label class="field-label" for="email">Email</label>
+                        <input pInputText id="email" [(ngModel)]="contactEmail" type="email"
+                            placeholder="you@example.com" class="w-full border-round-lg"
+                            [class.p-invalid]="contactEmail && !isEmailValid" />
+                        <small *ngIf="contactEmail && !isEmailValid" class="text-red-400 text-xs mt-1 block">
+                            Please enter a valid email.
+                        </small>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="field">
+                        <label class="field-label">Phone</label>
+                        <div class="phone-row">
+                            <p-select [options]="countryOptions" [(ngModel)]="selectedCountry" optionLabel="label"
+                                placeholder="🇿🇼 +263" styleClass="country-select border-round-lg" appendTo="body"
+                                [filter]="true" filterBy="label">
+                                <ng-template #selectedItem let-c>
+                                    <span class="country-selected">
+                                        <span>{{ c?.flag }}</span>
+                                        <span class="dial-code">{{ c?.dialCode }}</span>
+                                    </span>
+                                </ng-template>
+                                <ng-template #item let-c>
+                                    <span class="country-option">
+                                        <span>{{ c.flag }}</span>
+                                        <span class="text-sm">{{ c.label }}</span>
+                                        <span class="text-500 text-xs ml-auto">{{ c.dialCode }}</span>
+                                    </span>
+                                </ng-template>
+                            </p-select>
+                            <input pInputText [(ngModel)]="contactPhone" type="tel" placeholder="0771 234 567"
+                                class="phone-input border-round-lg" />
+                        </div>
+                    </div>
+
+                    <!-- Consent -->
+                    <div class="field">
+                        <label class="field-label">Data use</label>
+                        <div class="consent-list">
+                            <div *ngFor="let opt of consentOptions" class="consent-option"
+                                [class.selected]="consentStatus === opt.value"
+                                (click)="consentStatus = $any(opt.value)">
+                                <div class="consent-radio" [class.active]="consentStatus === opt.value"></div>
+                                <span class="text-sm">{{ opt.label }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-actions step-actions--split">
+                        <p-button label="Back" icon="pi pi-arrow-left" [text]="true" severity="secondary"
+                            (onClick)="prevStep()" />
+                        <p-button label="Submit Report" icon="pi pi-send" iconPos="right"
+                            styleClass="submit-btn border-round-lg" (onClick)="submit()" [loading]="submitting"
+                            [disabled]="!isFormValid || submitting" />
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /wizard-card -->
+    </div><!-- /page-body -->
+</div><!-- /public-page -->

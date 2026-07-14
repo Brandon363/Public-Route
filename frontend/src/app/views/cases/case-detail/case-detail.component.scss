@@ -1,0 +1,182 @@
+.capitalize { text-transform: capitalize; }
+.letter-spacing-1 { letter-spacing: 0.05em; }
+
+/* ── Section headings ─────────────────────────────────────── */
+.section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* ── Header card ──────────────────────────────────────────── */
+.header-card {
+    border: 1px solid var(--surface-border);
+}
+
+.sla-box {
+    background: var(--surface-ground);
+    min-width: 12rem;
+    border: 1px solid var(--surface-border);
+
+    &.sla-overdue {
+        background: color-mix(in srgb, var(--red-500) 8%, transparent);
+        border-color: color-mix(in srgb, var(--red-500) 25%, transparent);
+    }
+}
+
+/* ── Officer action bar ────────────────────────────────────── */
+.action-bar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+:host ::ng-deep .action-btn {
+    font-size: 0.8rem;
+
+    .p-button {
+        padding: 0.4rem 0.85rem;
+        font-size: 0.8rem;
+        gap: 0.35rem;
+    }
+}
+
+/* ── Overview info labels ──────────────────────────────────── */
+.info-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-color-secondary);
+    margin-bottom: 0.25rem;
+}
+
+/* ── Description body ──────────────────────────────────────── */
+.description-body {
+    font-size: 0.9rem;
+    min-height: 3rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Case Roadmap timeline
+   ══════════════════════════════════════════════════════════ */
+
+/* Hide the default empty opposite slot */
+:host ::ng-deep .p-timeline-event-opposite {
+    display: none;
+}
+
+/* Custom dot marker */
+.roadmap-dot {
+    display: block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--primary-color);
+    border: 2px solid var(--primary-color);
+    flex-shrink: 0;
+
+    &.roadmap-dot--auto {
+        background: var(--surface-card);
+        border-color: var(--text-color-secondary);
+    }
+}
+
+/* Tighten the connector line */
+:host ::ng-deep .roadmap-timeline {
+    .p-timeline-event-connector {
+        width: 1px;
+        background: var(--surface-border);
+    }
+
+    /* Remove default padding from the content slot */
+    .p-timeline-event-content {
+        padding: 0 0 0.85rem 0.25rem;
+    }
+
+    /* Remove extra space above first event */
+    .p-timeline-event:first-child .p-timeline-event-content {
+        padding-top: 0;
+    }
+}
+
+/* Roadmap event text */
+.roadmap-event {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding-bottom: 0;
+}
+
+.roadmap-action {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.roadmap-change {
+    font-size: 0.73rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.roadmap-reason {
+    font-size: 0.7rem;
+    color: var(--text-color-secondary);
+    font-style: italic;
+}
+
+.roadmap-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    color: var(--text-color-secondary);
+    margin-top: 0.1rem;
+
+    .pi { font-size: 0.6rem; }
+}
+
+.roadmap-time {
+    font-size: 0.65rem;
+    color: var(--text-color-secondary);
+    opacity: 0.7;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Action dialog shared styles
+   ══════════════════════════════════════════════════════════ */
+
+.dialog-field-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-color-secondary);
+    margin-bottom: 0.35rem;
+}
+
+:host ::ng-deep .action-dialog {
+    .p-dialog-header {
+        padding: 1rem 1.25rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        border-bottom: 1px solid var(--surface-border);
+    }
+
+    .p-dialog-content {
+        padding: 1rem 1.25rem;
+    }
+
+    .p-dialog-footer {
+        padding: 0.75rem 1.25rem 1rem;
+        border-top: 1px solid var(--surface-border);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+}

@@ -1,0 +1,84 @@
+<div class="pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-3">
+        <div>
+            <div class="text-4xl font-bold text-900">Queues</div>
+            <div class="text-500 mt-1">Intake queues cases are routed into, grouped by organisation unit.</div>
+        </div>
+        <p-button *ngIf="canCreateDelete" label="Add Queue" icon="pi pi-plus" styleClass="border-round-lg"
+            (onClick)="openCreateDialog()" />
+    </div>
+
+    <div class="card p-4 surface-card shadow-3 border-0 border-round-2xl">
+        <p-table [value]="queues" dataKey="id" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+            [loading]="loading" [paginator]="true" [rowHover]="true">
+            <ng-template #header>
+                <tr>
+                    <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+                    <th>Organisation Unit</th>
+                    <th pSortableColumn="capacity">Capacity <p-sortIcon field="capacity" /></th>
+                    <th pSortableColumn="is_active">Status <p-sortIcon field="is_active" /></th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-q>
+                <tr>
+                    <td class="font-semibold">{{ q.name }}</td>
+                    <td>{{ unitName(q.unit_id) }}</td>
+                    <td>{{ q.capacity ?? '—' }}</td>
+                    <td>
+                        <p-tag [value]="q.is_active ? 'Active' : 'Inactive'" [severity]="q.is_active ? 'success' : 'secondary'" />
+                    </td>
+                    <td>
+                        <div class="flex gap-2">
+                            <p-button icon="pi pi-eye" severity="info" variant="outlined" pTooltip="View"
+                                [routerLink]="['/queue', q.id]" />
+                            <ng-container *ngIf="canManage">
+                                <p-button icon="pi pi-pencil" severity="info" variant="outlined" pTooltip="Edit"
+                                    (onClick)="openEditDialog(q)" />
+                                <p-button [icon]="q.is_active ? 'pi pi-ban' : 'pi pi-check-circle'" severity="warn" variant="outlined"
+                                    [pTooltip]="q.is_active ? 'Deactivate' : 'Activate'" (onClick)="toggleActive(q)" />
+                                <p-button *ngIf="canCreateDelete" icon="pi pi-trash" severity="danger" variant="outlined" pTooltip="Delete"
+                                    (onClick)="confirmDelete($event, q)" />
+                            </ng-container>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr><td colspan="5" class="text-center py-4">No queues found.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Create / Edit dialog -->
+    <p-dialog [header]="editingQueue ? 'Edit Queue' : 'Add Queue'" [(visible)]="showFormDialog"
+        [modal]="true" [style]="{ width: '30rem' }" [breakpoints]="{ '575px': '92vw' }"
+        (onHide)="closeFormDialog()">
+        <div class="flex flex-column gap-3 mt-2">
+            <div class="field" *ngIf="!editingQueue">
+                <label class="form-label">Organisation Unit *</label>
+                <p-select [options]="unitOptions" [(ngModel)]="form.unit_id"
+                    optionLabel="label" optionValue="value" placeholder="Select a unit"
+                    styleClass="w-full border-round-lg" appendTo="body" [filter]="true" />
+            </div>
+            <div class="field">
+                <label class="form-label">Name *</label>
+                <input pInputText [(ngModel)]="form.name" placeholder="e.g. Water Faults Queue" class="w-full border-round-lg" />
+            </div>
+            <div class="field">
+                <label class="form-label">Capacity</label>
+                <p-inputNumber [(ngModel)]="form.capacity" [min]="0" styleClass="w-full" inputStyleClass="w-full border-round-lg" placeholder="Optional" />
+            </div>
+            <div class="field flex align-items-center gap-2" *ngIf="editingQueue">
+                <p-toggleSwitch [(ngModel)]="form.is_active" />
+                <label class="form-label m-0">Active</label>
+            </div>
+        </div>
+        <ng-template #footer>
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="closeFormDialog()" />
+            <p-button [label]="editingQueue ? 'Save Changes' : 'Create Queue'" icon="pi pi-check"
+                styleClass="border-round-lg" [loading]="saving" [disabled]="!isFormValid" (onClick)="save()" />
+        </ng-template>
+    </p-dialog>
+</div>

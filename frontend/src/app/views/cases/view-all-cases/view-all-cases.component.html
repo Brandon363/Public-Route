@@ -1,0 +1,157 @@
+<div class="pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <!-- ── Page Header ─────────────────────────────────────────── -->
+    <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-3">
+        <div>
+            <div class="text-4xl font-bold text-900">{{ isCitizen() ? 'My Cases' : 'Cases' }}</div>
+            <div class="text-500 mt-1">{{ isCitizen() ? 'Your submitted reports and their current status' : 'Citizen service requests — intake, classification and routing' }}</div>
+        </div>
+    </div>
+
+    <!-- ── Summary Stat Cards ──────────────────────────────────── -->
+    <div class="grid mb-4">
+        <div class="col-12 sm:col-6 lg:col-3" *ngFor="let item of cards">
+            <div class="stat-card surface-card border-round-xl p-4 h-full flex justify-content-between align-items-center shadow-1">
+                <div>
+                    <div class="text-xs font-semibold text-500 uppercase mb-2 letter-spacing-1">{{item.title}}</div>
+                    <div class="text-4xl font-bold text-900 mb-1">{{item.value}}</div>
+                    <div class="text-500 text-sm">{{item.description}}</div>
+                </div>
+                <div class="stat-icon-wrap flex align-items-center justify-content-center border-round-xl">
+                    <i [class]="item.icon" class="text-2xl text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filter Toolbar ──────────────────────────────────────── -->
+    <div class="surface-card border-round-xl shadow-1 p-3 mb-4">
+        <div class="flex flex-column lg:flex-row align-items-start lg:align-items-center gap-3">
+
+            <!-- Search -->
+            <div class="filter-group flex-1">
+                <label class="filter-label">Search</label>
+                <p-iconfield class="w-full">
+                    <p-inputicon styleClass="pi pi-search search-icon-btn" (click)="onFilterChange()" />
+                    <input pInputText [(ngModel)]="searchQuery" (keyup.enter)="onFilterChange()"
+                        placeholder="Search by reference, category…" class="w-full border-round-lg" />
+                </p-iconfield>
+            </div>
+
+            <!-- Divider -->
+            <div class="filter-divider hidden lg:block"></div>
+
+            <!-- Status -->
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <p-select [options]="statusOptions" [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()"
+                    placeholder="All statuses" styleClass="w-full border-round-lg" appendTo="body" [showClear]="true">
+                    <ng-template #selectedItem let-selectedOption>
+                        <span>{{ humanize(selectedOption) }}</span>
+                    </ng-template>
+                    <ng-template #item let-option>
+                        <span>{{ humanize(option) }}</span>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <!-- Category -->
+            <div class="filter-group">
+                <label class="filter-label">Category</label>
+                <p-select [options]="categoryOptions" [(ngModel)]="categoryFilter" (ngModelChange)="onFilterChange()"
+                    placeholder="All categories" styleClass="w-full border-round-lg" appendTo="body" [showClear]="true">
+                    <ng-template #selectedItem let-selectedOption>
+                        <span>{{ humanize(selectedOption) }}</span>
+                    </ng-template>
+                    <ng-template #item let-option>
+                        <span>{{ humanize(option) }}</span>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <!-- Clear button -->
+            <div class="filter-group flex align-items-end">
+                <label class="filter-label" style="visibility:hidden">Clear</label>
+                <p-button label="Clear" icon="pi pi-filter-slash" severity="secondary" [outlined]="true"
+                    styleClass="border-round-lg w-full"
+                    (onClick)="clearFilters()" />
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card p-4 surface-card shadow-3 border-0 border-round-2xl">
+        <p-table [value]="allCases" dataKey="id" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+            [loading]="loading" [paginator]="true" [scrollable]="true" [rowHover]="true">
+            <ng-template #header>
+                <tr>
+                    <th pSortableColumn="reference_number">
+                        <div class="flex align-items-center justify-content-between">
+                            Reference
+                            <p-sortIcon field="reference_number"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="category">
+                        <div class="flex align-items-center justify-content-between">
+                            Category
+                            <p-sortIcon field="category"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="urgency">
+                        <div class="flex align-items-center justify-content-between">
+                            Urgency
+                            <p-sortIcon field="urgency"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="status">
+                        <div class="flex align-items-center justify-content-between">
+                            Status
+                            <p-sortIcon field="status"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="district_id">
+                        <div class="flex align-items-center justify-content-between">
+                            District
+                            <p-sortIcon field="district_id"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th pSortableColumn="opened_at">
+                        <div class="flex align-items-center justify-content-between">
+                            Opened
+                            <p-sortIcon field="opened_at"></p-sortIcon>
+                        </div>
+                    </th>
+                    <th>SLA Deadline</th>
+                    <th>Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-caseItem>
+                <tr>
+                    <td class="font-semibold">{{ caseItem.reference_number }}</td>
+                    <td>{{ humanize(caseItem.category) }}</td>
+                    <td><p-tag [value]="caseItem.urgency" [severity]="getUrgencySeverity(caseItem.urgency)" styleClass="capitalize" /></td>
+                    <td><p-tag [value]="humanize(caseItem.status)" [severity]="getStatusSeverity(caseItem.status)" /></td>
+                    <td>{{ getDistrictName(caseItem.district_id) }}</td>
+                    <td>{{ caseItem.opened_at ? (caseItem.opened_at | date:'short') : '—' }}</td>
+                    <td>
+                        <div>{{ caseItem.sla_deadline ? (caseItem.sla_deadline | date:'short') : '—' }}</div>
+                        <div *ngIf="slaDaysText(caseItem)" class="text-xs"
+                            [ngClass]="isSlaUrgent(caseItem) ? 'text-red-500 font-semibold' : 'text-500'">
+                            {{ slaDaysText(caseItem) }}
+                        </div>
+                    </td>
+                    <td>
+                        <p-button icon="pi pi-eye" severity="info" [routerLink]="['/case', caseItem.id]"
+                            pTooltip="View Details" variant="outlined"></p-button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr>
+                    <td colspan="8" class="text-center py-4">No cases found.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+

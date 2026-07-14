@@ -1,0 +1,110 @@
+<div class="pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <div class="flex flex-column lg:flex-row justify-content-between align-items-start lg:align-items-center mb-5 gap-3">
+        <div>
+            <div class="text-4xl font-bold text-900">Resource Teams</div>
+            <div class="text-500 mt-1">Field teams available for assignment, by skill and base district.</div>
+        </div>
+        <p-button *ngIf="canCreateDelete" label="Add Team" icon="pi pi-plus" styleClass="border-round-lg"
+            (onClick)="openCreateDialog()" />
+    </div>
+
+    <div class="card p-4 surface-card shadow-3 border-0 border-round-2xl">
+        <p-table [value]="teams" dataKey="id" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+            [loading]="loading" [paginator]="true" [rowHover]="true">
+            <ng-template #header>
+                <tr>
+                    <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
+                    <th>Skills</th>
+                    <th>Service Categories</th>
+                    <th pSortableColumn="capacity">Capacity <p-sortIcon field="capacity" /></th>
+                    <th>Base District</th>
+                    <th pSortableColumn="is_active">Status <p-sortIcon field="is_active" /></th>
+                    <th *ngIf="canManage">Actions</th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-t>
+                <tr>
+                    <td class="font-semibold">
+                        <a class="text-900 no-underline hover:underline cursor-pointer"
+                            [routerLink]="['/resource-team', t.id]">{{ t.name }}</a>
+                    </td>
+                    <td class="text-sm">{{ t.skills?.length ? t.skills.join(', ') : '—' }}</td>
+                    <td>
+                        <div class="flex gap-1 flex-wrap">
+                            <p-tag *ngFor="let c of t.service_categories" [value]="categoryLabel(c)" severity="info" />
+                            <span *ngIf="!t.service_categories?.length" class="text-500 text-sm">—</span>
+                        </div>
+                    </td>
+                    <td>{{ t.capacity }}</td>
+                    <td>{{ districtLabel(t.base_district_id) }}</td>
+                    <td>
+                        <p-tag [value]="t.is_active ? 'Active' : 'Inactive'" [severity]="t.is_active ? 'success' : 'secondary'" />
+                    </td>
+                    <td *ngIf="canManage">
+                        <div class="flex gap-2">
+                            <p-button icon="pi pi-pencil" severity="info" variant="outlined" pTooltip="Edit"
+                                (onClick)="openEditDialog(t)" />
+                            <p-button [icon]="t.is_active ? 'pi pi-ban' : 'pi pi-check-circle'" severity="warn" variant="outlined"
+                                [pTooltip]="t.is_active ? 'Deactivate' : 'Activate'" (onClick)="toggleActive(t)" />
+                            <p-button *ngIf="canCreateDelete" icon="pi pi-trash" severity="danger" variant="outlined" pTooltip="Delete"
+                                (onClick)="confirmDelete($event, t)" />
+                        </div>
+                    </td>
+                    <td>
+                        <p-button icon="pi pi-eye" severity="info" variant="outlined" pTooltip="View Details"
+                            [routerLink]="['/resource-team', t.id]" />
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template #emptymessage>
+                <tr><td [attr.colspan]="canManage ? 8 : 7" class="text-center py-4">No resource teams found.</td></tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Create / Edit dialog -->
+    <p-dialog [header]="editingTeam ? 'Edit Resource Team' : 'Add Resource Team'" [(visible)]="showFormDialog"
+        [modal]="true" [style]="{ width: '34rem' }" [breakpoints]="{ '575px': '92vw' }"
+        (onHide)="closeFormDialog()">
+        <div class="flex flex-column gap-3 mt-2">
+            <div class="field">
+                <label class="form-label">Name *</label>
+                <input pInputText [(ngModel)]="form.name" placeholder="e.g. Alpha Field Team" class="w-full border-round-lg" />
+            </div>
+            <div class="field">
+                <label class="form-label">Skills</label>
+                <input pInputText [(ngModel)]="form.skillsText" placeholder="Comma-separated, e.g. plumbing, electrical"
+                    class="w-full border-round-lg" />
+            </div>
+            <div class="field">
+                <label class="form-label">Service Categories</label>
+                <p-multiSelect [options]="categoryOptions" [(ngModel)]="form.service_categories"
+                    optionLabel="label" optionValue="value" placeholder="Select categories this team handles"
+                    styleClass="w-full border-round-lg" appendTo="body" display="chip" />
+            </div>
+            <div class="grid">
+                <div class="col-6">
+                    <label class="form-label">Capacity *</label>
+                    <p-inputNumber [(ngModel)]="form.capacity" [min]="1" styleClass="w-full" inputStyleClass="w-full border-round-lg" />
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Base District</label>
+                    <p-select [options]="districtOptions" [(ngModel)]="form.base_district_id"
+                        optionLabel="label" optionValue="value" placeholder="Optional" [showClear]="true"
+                        styleClass="w-full border-round-lg" appendTo="body" [filter]="true" />
+                </div>
+            </div>
+            <div class="field flex align-items-center gap-2" *ngIf="editingTeam">
+                <p-toggleSwitch [(ngModel)]="form.is_active" />
+                <label class="form-label m-0">Active</label>
+            </div>
+        </div>
+        <ng-template #footer>
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="closeFormDialog()" />
+            <p-button [label]="editingTeam ? 'Save Changes' : 'Create Team'" icon="pi pi-check"
+                styleClass="border-round-lg" [loading]="saving" [disabled]="!isFormValid" (onClick)="save()" />
+        </ng-template>
+    </p-dialog>
+</div>

@@ -1,0 +1,85 @@
+<ng-template #appMenu>
+  <p-menu [model]="items" styleClass="w-full border-none bg-transparent p-0">
+
+    <ng-template #start>
+      <div class="flex align-items-center justify-content-start pt-3 px-3">
+        <img src="assets/images/logo-d.png" alt="logo" width="150" />
+      </div>
+      <p-divider class="mb-5 "></p-divider>
+    </ng-template>
+
+    <ng-template #submenuheader let-item>
+      <div *ngIf="item.visible !== false" class="text-500 font-semibold text-xs uppercase pt-3 pb-1 px-3 tracking-wide">
+        {{ item.label }}
+      </div>
+    </ng-template>
+
+    <ng-template #item let-item>
+      <a pRipple
+        class="flex align-items-center w-full px-3 py-2 border-round-md transition-colors transition-duration-150 cursor-pointer select-none no-underline"
+        [ngClass]="isActiveMenu(item.routerLink) ? 'bg-primary text-white font-semibold' : 'text-700 hover:surface-100 hover:text-900 font-medium'"
+        [routerLink]="item.routerLink"
+        (click)="showMobileMenu = false; item.command ? item.command({ item: item }) : null">
+
+        <i [class]="item.icon" class="text-lg"></i>
+
+        <span class="ml-3">{{ item.label }}</span>
+      </a>
+    </ng-template>
+  </p-menu>
+</ng-template>
+
+<div class="flex h-screen overflow-hidden">
+
+  <div
+    class="w-17rem surface-card border-right-1 surface-border hidden lg:flex flex-column h-full px-2 overflow-y-auto">
+    <ng-container *ngTemplateOutlet="appMenu"></ng-container>
+  </div>
+
+  <div class="flex-1 flex flex-column min-w-0 h-full">
+
+    <div
+      class="w-full h-4rem surface-card border-bottom-1 surface-border shadow-none z-5 flex justify-content-between align-items-center px-4 gap-3">
+      <div class="flex gap-3 align-items-center">
+        <p-button icon="pi pi-bars" class="lg:hidden" [rounded]="true" [text]="true" (click)="showMobileMenu = true" />
+      </div>
+
+      <div class="flex align-items-center gap-3">
+        <p-button (onClick)="toggleDarkMode()" [icon]="themeIcon" [rounded]="true" [text]="true" />
+
+        <div>
+          <p-menu #menu [model]="accountMenuItems" [popup]="true" />
+          <p-avatar [label]="avatarText"
+            styleClass="text-sm bg-primary cursor-pointer hover:bg-primary-700 transition-colors" shape="circle"
+            (click)="menu.toggle($event)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 overflow-y-auto surface-ground relative">
+      <div *ngIf="isManipulatingData"
+        class="absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center z-5"
+        style="background: rgba(var(--surface-ground-rgb), 0.8); backdrop-filter: blur(4px);">
+        <div
+          class="surface-card p-5 border-round-xl shadow-4 flex flex-column align-items-center text-center max-w-sm animation-duration-300 fadein">
+          <p-progressSpinner styleClass="w-4rem h-4rem mb-4" strokeWidth="4" animationDuration="1s"></p-progressSpinner>
+          <h3 class="text-xl font-semibold text-900 mb-2 mt-0">Working on it...</h3>
+
+          <div class="h-4rem flex align-items-center justify-content-center">
+            <p class="text-600 m-0 line-height-3 fadein animation-duration-500">{{ currentLoadingMessage }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="h-full">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-drawer [(visible)]="showMobileMenu" [showCloseIcon]="false">
+  <div class="px-2 h-full overflow-y-auto">
+    <ng-container *ngTemplateOutlet="appMenu"></ng-container>
+  </div>
+</p-drawer>

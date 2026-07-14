@@ -1,0 +1,126 @@
+// @use '@fontsource/inter'; /* Load Inter font */
+/* You can add global styles to this file, and also import other style files */
+@import "../node_modules/primeflex/primeflex.css";
+@import "../node_modules/primeicons/primeicons.css";
+// @import "assets/themes/tailwind/tailwind-light/theme.scss";
+// @import "assets/themes/lara/lara-light/blue/theme.scss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+
+
+body {
+  // font-family: 'Open Sans', -apple-system, sans-serif; /* Override default */
+  font-family: 'Inter', -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 15px;
+}
+
+.table-details tr td {
+  padding-left: 1rem;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
+
+.ellipsis-5-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+}
+
+.ellipsis-3-lines {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5em;
+  /* adjust the line height */
+  padding-bottom: 0rem;
+  /* add some padding to the bottom */
+}
+
+// .ellipsis-3-lines {
+//   display: -webkit-box;
+//   -webkit-line-clamp: 3;
+//   line-clamp: 3;
+//   -webkit-box-orient: vertical;
+//   box-orient: vertical;
+//   overflow: hidden;
+// }
+
+.ellipsis-lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  box-orient: vertical;
+  overflow: hidden;
+  -webkit-line-clamp: var(--line-clamp);
+  line-clamp: var(--line-clamp);
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* PrimeNG p-iconfield & p-inputicon global custom positioning overrides to prevent alignment issues */
+.p-iconfield, p-iconfield {
+  position: relative;
+  display: flex !important;
+  align-items: center;
+  width: 100%;
+  
+  .p-inputicon, p-inputicon {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin-top: 0 !important; /* Reset PrimeNG's negative margin-top */
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #94a3b8 !important; /* Cool slate color for icon */
+    z-index: 10;
+    height: auto !important;
+    line-height: 1 !important;
+  }
+}
+
+.p-iconfield-left .p-inputicon, p-iconfield[iconPosition="left"] p-inputicon {
+  left: 0.85rem !important;
+}
+
+.p-iconfield-left input, p-iconfield[iconPosition="left"] input {
+  padding-left: 2.5rem !important;
+}
+
+.p-iconfield-right .p-inputicon, p-iconfield[iconPosition="right"] p-inputicon {
+  right: 0.85rem !important;
+}
+
+.p-iconfield-right input, p-iconfield[iconPosition="right"] input {
+  padding-right: 2.5rem !important;
+}

@@ -1,0 +1,87 @@
+<div class="detail-page pt-4 lg:pt-4 lg:px-3 lg:pb-5 mx-3 pb-4">
+
+    <p-button label="Back to Queues" icon="pi pi-arrow-left" severity="secondary" [text]="true"
+        styleClass="mb-3 -ml-2" (onClick)="goBack()" />
+
+    <div *ngIf="loading" class="flex flex-column align-items-center justify-content-center py-8">
+        <p-progressSpinner styleClass="w-4rem h-4rem mb-3" strokeWidth="4" />
+        <div class="text-500">Loading queue…</div>
+    </div>
+
+    <div *ngIf="!loading && notFound" class="surface-card border-round-xl shadow-1 p-5 text-center">
+        <i class="pi pi-exclamation-circle text-4xl text-500 mb-3 block"></i>
+        <div class="text-2xl font-semibold mb-2">Queue Not Found</div>
+        <p-button label="Back to Queues" icon="pi pi-arrow-left" styleClass="border-round-lg" (onClick)="goBack()" />
+    </div>
+
+    <ng-container *ngIf="!loading && !notFound && queue as q">
+
+        <!-- Header -->
+        <div class="header-card surface-card border-round-xl shadow-1 p-4 md:p-5 mb-4">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-start gap-4">
+                <div>
+                    <div class="text-500 text-sm uppercase font-semibold letter-spacing-1 mb-1">Queue</div>
+                    <div class="text-4xl font-bold text-900 mb-3">{{ q.name }}</div>
+                    <div class="flex gap-2 flex-wrap align-items-center">
+                        <p-tag [value]="q.is_active ? 'Active' : 'Inactive'"
+                            [severity]="q.is_active ? 'success' : 'secondary'" styleClass="text-sm px-3 py-1" />
+                        <span class="text-500 text-sm">Capacity {{ q.capacity ?? '—' }}</span>
+                        <ng-container *ngIf="unit">
+                            <span class="text-500">·</span>
+                            <a class="text-primary font-medium cursor-pointer no-underline hover:underline"
+                                [routerLink]="['/organisation-unit', unit.id]">
+                                <i class="pi pi-building text-xs mr-1"></i>{{ unit.name }}
+                            </a>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cases in this queue -->
+        <div class="surface-card border-round-xl shadow-1 p-4 mb-4">
+            <div class="font-semibold text-900 mb-3 flex align-items-center gap-2">
+                <i class="pi pi-briefcase text-primary"></i> Cases in This Queue
+                <p-tag *ngIf="canViewCases" [value]="cases.length.toString()" severity="secondary" styleClass="ml-1" />
+            </div>
+
+            <div *ngIf="!canViewCases" class="text-500 text-sm">
+                Your role doesn't have access to case details.
+            </div>
+
+            <div *ngIf="canViewCases && !loadingCases && cases.length === 0" class="text-500 text-sm">
+                No cases are currently routed to this queue.
+            </div>
+
+            <p-table *ngIf="canViewCases" [value]="cases" dataKey="id" [rows]="10" [rowsPerPageOptions]="[10, 25, 50]"
+                [loading]="loadingCases" [paginator]="cases.length > 10" [rowHover]="true">
+                <ng-template #header>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Category</th>
+                        <th>Urgency</th>
+                        <th>Status</th>
+                        <th>Opened</th>
+                        <th>Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-c>
+                    <tr>
+                        <td class="font-semibold">{{ c.reference_number }}</td>
+                        <td>{{ humanize(c.category) }}</td>
+                        <td><p-tag [value]="c.urgency" [severity]="getUrgencySeverity(c.urgency)" styleClass="capitalize" /></td>
+                        <td><p-tag [value]="humanize(c.status)" [severity]="getStatusSeverity(c.status)" /></td>
+                        <td>{{ c.opened_at ? (c.opened_at | date:'short') : '—' }}</td>
+                        <td>
+                            <p-button icon="pi pi-eye" severity="info" variant="outlined" pTooltip="View"
+                                [routerLink]="['/case', c.id]" />
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template #emptymessage>
+                    <tr><td colspan="6" class="text-center py-4">No cases found.</td></tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-container>
+</div>
