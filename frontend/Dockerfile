@@ -21,7 +21,6 @@ RUN npm run build -- --configuration production
 FROM nginx:stable-alpine
 
 # Copy the built files from the build stage to Nginx's web directory
-# NOTE: Replace 'your-app-name' with your project name (check your dist/ folder)
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
 # Copy a custom Nginx configuration (we will create this in Step 2)

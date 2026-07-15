@@ -1,34 +1,31 @@
-FROM python:3.13-slim-bookworm
+# Use the official Python 3.11 lightweight image
+FROM python:3.11-slim
 
-# Install system dependencies required for pyodbc and other builds
-RUN apt-get update && apt-get install -y \
-    curl \
-    gnupg2 \
-    apt-transport-https \
-    ca-certificates \
-    unixodbc \
-    unixodbc-dev \
-    gcc \
-    g++ \
-    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
-    && curl https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-    && apt-get update \
-    && ACCEPT_EULA=Y apt-get install -y msodbcsql17 \
-    && rm -rf /var/lib/apt/lists/*
+# Prevent Python from writing pyc files and keep stdout unbuffered
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# Copy dependency definition
-COPY pyproject.toml .
+# Install essential system dependencies
+# (ffmpeg is often needed for OCR/audio tasks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN pip install --no-cache-dir .
+# Copy only the requirements file first to leverage layer caching
+COPY requirements.txt .
 
-# Copy the rest of the application
+# Install your Python packages
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of your application code
 COPY . .
 
-# Expose the port
-EXPOSE 8000
+# Expose the port Uvicorn will run on
+EXPOSE 8015
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the FastAPI server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8015"]
